@@ -171,7 +171,7 @@ def obter_usuarios_validos():
     """Obtém a lista de usuários válidos do servidor."""
     try:
         # Fazendo a requisição para obter a lista de usuários válidos
-        response = requests.get("https://servidor-para-emme2.onrender.com/usuarios")
+        response = requests.get("https://xlogs.onrender.com/usuarios")
         
         # Verificando se a resposta foi bem-sucedida
         if response.status_code == 200:
