@@ -1,83 +1,77 @@
 from flask import Flask, request, jsonify
-import json
+from models import db, Usuario
 import os
 
 app = Flask(__name__)
 
-# Caminho do arquivo JSON que armazena os usuários válidos
-USUARIOS_JSON = os.path.join(os.path.dirname(__file__), 'servidor', 'usuarios.json')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-def carregar_usuarios():
-    '''Carrega os usuários válidos do arquivo JSON.'''
-    try:
-        with open(USUARIOS_JSON, 'r') as f:
-            usuarios_validos = json.load(f)
-        return usuarios_validos
-    except FileNotFoundError:
-        return {}  # Retorna um dicionário vazio caso o arquivo não exista
+db.init_app(app)
 
-def salvar_usuarios(usuarios):
-    '''Salva os usuários válidos no arquivo JSON.'''
-    with open(USUARIOS_JSON, 'w') as f:
-        json.dump(usuarios, f)
-
-# Lista inicial de usuários válidos
-usuarios_validos = carregar_usuarios()
+# Criar as tabelas no primeiro acesso
+@app.before_request
+def criar_tabelas():
+    db.create_all()
 
 @app.route('/')
 def home():
-    return f'Servidor funcionando no Render!\n{usuarios_validos}'
+    return 'Servidor funcionando no Render!'
 
 @app.route('/validar_usuario', methods = ['POST'])
 def validar_usuario():
-    '''Valida se o usuário está autorizado.'''
     dados = request.json
     email = dados.get('email')
-    
+
     if not email:
-        return jsonify({'erro': 'Email não fornecido'}), 400
+        return jsonify({'erro': 'Email não encontrado'}), 400
     
-    if email in usuarios_validos:
-        return jsonify({'autorizado': True})
+    usuario = Usuario.query.get(email)
+
+    if usuario:
+        return jsonify({'autoizado': True})
     return jsonify({'autorizado': False})
 
 @app.route('/usuarios', methods = ['GET'])
 def listar_usuarios():
-    '''Retorna a lista de usuários válidos.'''
     try:
-        return jsonify({'usuarios': list(usuarios_validos.keys())})
+        usuarios = Usuario.query.all()
+        return jsonify({'usuarios': [u.email for u in usuarios]})
     except Exception as e:
         return jsonify({'erro': f'Erro ao obter usuários: {str(e)}'}), 500
-
+    
 @app.route('/usuarios', methods = ['POST'])
 def adicionar_usuario():
-    '''Adiciona um usuário à lista de autorizados.'''
     dados = request.json
     email = dados.get('email')
     status = dados.get('status', 'valido')
-    
+
     if not email:
         return jsonify({'erro': 'Email não fornecido'}), 400
+
+    if Usuario.query.get(email):
+        return jsonify({'erro': 'Usuário já existe'}), 409
     
-    usuarios_validos[email] = status
-    salvar_usuarios(usuarios_validos)  # Salva as mudanças no arquivo JSON
+    novo_usuario = Usuario(email = email, status = status)
+    db.session.add(novo_usuario)
+    db.session.commit()
     return jsonify({'mensagem': f'Usuário {email} adicionado com status {status}'})
 
-@app.route('/usuarios', methods = ['DELETE'])
+@app.route('/usuarios', methods=['DELETE'])
 def remover_usuario():
-    '''Remove um usuário da lista de autorizados.'''
     dados = request.json
     email = dados.get('email')
-    
+
     if not email:
         return jsonify({'erro': 'Email não fornecido'}), 400
 
-    if email in usuarios_validos:
-        del usuarios_validos[email]
-        salvar_usuarios(usuarios_validos)  # Salva as mudanças no arquivo JSON
+    usuario = Usuario.query.get(email)
+    if usuario:
+        db.session.delete(usuario)
+        db.session.commit()
         return jsonify({'mensagem': f'Usuário {email} removido com sucesso'})
     else:
         return jsonify({'erro': f'Usuário {email} não encontrado'}), 404
 
 if __name__ == '__main__':
-    app.run(debug = True)
+    app.run(debug=True)
