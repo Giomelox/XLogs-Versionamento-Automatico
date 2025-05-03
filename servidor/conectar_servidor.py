@@ -4,7 +4,7 @@ import json
 app = Flask(__name__)
 
 # Caminho do arquivo JSON que armazena os usuários válidos
-USUARIOS_JSON = 'conectar_servidor/usuarios.json'
+USUARIOS_JSON = 'usuarios.json'
 
 def carregar_usuarios():
     '''Carrega os usuários válidos do arquivo JSON.'''
