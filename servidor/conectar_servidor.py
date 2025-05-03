@@ -1,10 +1,11 @@
 from flask import Flask, request, jsonify
 import json
+import os
 
 app = Flask(__name__)
 
 # Caminho do arquivo JSON que armazena os usuários válidos
-USUARIOS_JSON = 'usuarios.json'
+USUARIOS_JSON = os.path.join(os.path.dirname(__file__), 'conectar_servidor', 'usuarios.json')
 
 def carregar_usuarios():
     '''Carrega os usuários válidos do arquivo JSON.'''
