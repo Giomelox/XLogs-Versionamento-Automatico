@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from models import db, Usuario
+from servidor.models import db, Usuario
 import os
 
 app = Flask(__name__)
