@@ -25,7 +25,7 @@ usuarios_validos = carregar_usuarios()
 
 @app.route('/')
 def home():
-    return 'Servidor funcionando no Render!'
+    return f'Servidor funcionando no Render!\n{usuarios_validos}'
 
 @app.route('/validar_usuario', methods = ['POST'])
 def validar_usuario():
