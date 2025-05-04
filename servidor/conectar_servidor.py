@@ -57,7 +57,7 @@ def adicionar_usuario():
     db.session.commit()
     return jsonify({'mensagem': f'Usuário {email} adicionado com status {status}'})
 
-@app.route('/usuarios', methods=['DELETE'])
+@app.route('/usuarios', methods = ['DELETE'])
 def remover_usuario():
     dados = request.json
     email = dados.get('email')
@@ -74,4 +74,4 @@ def remover_usuario():
         return jsonify({'erro': f'Usuário {email} não encontrado'}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug = True)
