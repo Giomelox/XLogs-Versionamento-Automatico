@@ -171,14 +171,14 @@ def obter_usuarios_validos():
     """Obtém a lista de usuários válidos do servidor."""
     try:
         # Fazendo a requisição para obter a lista de usuários válidos
-        response = requests.get("https://xlogs.onrender.com/usuarios")
+        response = requests.get('https://xlogs.onrender.com/usuarios')
         
         # Verificando se a resposta foi bem-sucedida
         if response.status_code == 200:
             data = response.json()  # Converte a resposta para JSON
 
-            if isinstance(data, dict) and "usuarios" in data:
-                usuarios = data["usuarios"]
+            if isinstance(data, dict) and 'usuarios' in data:
+                usuarios = data['usuarios']
                 return usuarios  # Retorna a lista de usuários
             
             else:
