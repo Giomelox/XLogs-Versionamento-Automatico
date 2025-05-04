@@ -15,35 +15,38 @@ def visualizar_tabela():
     with app.app_context():
         usuarios = Usuario.query.all()
     if not usuarios:
-        print("Nenhum usuário encontrado.")
+        print('Nenhum usuário encontrado.')
     else:
         for u in usuarios:
-            print(f"\nEmail: {u.email} | Status: {u.status}\n")
+            print(f"\nEmail: {u.email}\n")
 
-def validar_usuario(email, status = 'valido'):
+def criar_usuario(email):
     with app.app_context():
         # Verifica se o usuário já existe
         if Usuario.query.filter_by(email = email).first():
             print(f"Usuário '{email}' já existe.")
             return
 
-        novo_usuario = Usuario(email = email, status = status)
+        novo_usuario = Usuario(email = email)
         db.session.add(novo_usuario)
         db.session.commit()
-        print(f"Usuário '{email}' adicionado com sucesso com status '{status}'.")
+        print(f"Usuário '{email}' adicionado com sucesso.")
 
-def invalidar_usuario(email, status = 'invalido'):
+def remover_usuario(email):
     with app.app_context():
+        # Verifica se o usuário existe no banco de dados
         usuario = Usuario.query.filter_by(email = email).first()
-
+        
         if not usuario:
-            print(f"Usuário '{email}' não existe.")
+            print(f"Usuário '{email}' não encontrado.")
             return
+        db.session.expunge(usuario)
+        db.session.delete(usuario)  
 
-        usuario.status = status
         db.session.commit()
-        print(f"Usuário '{email}' invalidado com sucesso com status '{status}'.")
+        print(f"Usuário '{email}' excluído com sucesso.")
 
-# 🔽 Edite aqui para adicionar usuários
 if __name__ == '__main__':
     visualizar_tabela()
+    #criar_usuario(email = 'matecrecifepe@gmail.com')
+    #remover_usuario(email = 'matecrecifepe@gmail.com')
