@@ -1,4 +1,7 @@
 {
-    "versao": "0.0.1",
-    "url": "https://github.com/Giomelox/XLogs/releases/download/v0.0.1/XLogs.zip"
+    "versao": [
+        "0.0.1",
+        "https://github.com/Giomelox/XLogs/releases/download/v0.0.1/XLogs.zip"
+    ],
+    "url": "https://api.github.com/repos/Giomelox/XLogs/releases/tags/v0.0.1"
 }
