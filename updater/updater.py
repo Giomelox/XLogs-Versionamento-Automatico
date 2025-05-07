@@ -48,6 +48,11 @@ def verificar_nova_versao():
             print(f"Erro ao tentar converter a resposta em JSON: {e}")
             print("Conteúdo retornado:", resposta.text)  # Exibe o conteúdo da resposta
             return None, None
+    
+    elif resposta.status_code == 429:
+        print('Muitas requisições ao mesmo tempo. Aguarde um pouco antes de tentar novamente.\nO programa será aberto sem atualização.')
+        return None, None
+
     else:
         print(f"Erro ao obter versão remota. Status: {resposta.status_code}")
         print("Conteúdo retornado:", resposta.text)  # Exibe o conteúdo da resposta em caso de erro
@@ -136,38 +141,64 @@ def extrair_zip():
     print('Conteúdo extraído:', os.listdir(extract_path))
 
 def substituir_arquivos(nova_versao, url_zip):
-    extract_path = Path.cwd() / 'new_version'
+    extract_path = Path.cwd() / 'new_version' / 'system_main'
     zip_path = Path.cwd() / 'update.zip'
 
-    arquivos_extraidos = os.listdir(extract_path)
-    
-    for item in arquivos_extraidos:
-        if item == 'updater.exe':
+    if not extract_path.exists():
+        print(f"Erro: Diretório de extração não encontrado: {extract_path}")
+        return
+
+    arquivos_para_atualizar = [
+        f for f in extract_path.glob('*') 
+        if f.is_file() and f.name != 'updater.exe'
+    ]
+
+    if not arquivos_para_atualizar:
+        print("Nenhum arquivo encontrado para atualizar.")
+        return
+
+    print(f"\nIniciando substituição de {len(arquivos_para_atualizar)} arquivos...")
+
+    for arquivo_origem in arquivos_para_atualizar:
+        if arquivo_origem.name in ['usuario_autenticado.txt', 'Configurações de usuario.txt']:
             continue
 
-        src = extract_path / item
-        dst = SYSTEM_MAIN / item
+        arquivo_destino = SYSTEM_MAIN / arquivo_origem.name
 
-        if src.is_dir():
-            if dst.exists():
-                shutil.rmtree(dst)
-            shutil.copytree(src, dst)
-        else:
-            if dst.exists():
-                dst.unlink()
-            shutil.copy2(src, dst)
+        try:
+            print(f"Substituindo: {arquivo_origem.name}")
+            
+            if sys.platform == 'win32' and arquivo_destino.exists():
+                subprocess.run(
+                    ['taskkill', '/F', '/IM', arquivo_destino.name],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )
+                time.sleep(0.5)
 
-    shutil.rmtree(extract_path)
-    zip_path.unlink()
+            if arquivo_destino.exists():
+                arquivo_destino.unlink()
+            
+            shutil.copy2(arquivo_origem, arquivo_destino)
+            print(f"✓ {arquivo_origem.name} atualizado com sucesso")
 
-    with open(VERSAO_JSON_PATH, 'w', encoding='utf-8') as f:
-        json.dump({'versao': nova_versao, 'url': url_zip}, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"✗ Falha ao atualizar {arquivo_origem.name}: {str(e)}")
 
-    print('Substituição concluída.')
+    shutil.rmtree(extract_path.parent)
+    zip_path.unlink(missing_ok=True)
+
+    with open(VERSAO_JSON_PATH, 'w', encoding = 'utf-8') as f:
+        json.dump({
+            'versao': str(nova_versao),
+            'url': str(url_zip)
+        }, f, ensure_ascii = False, indent = 4)
+
+    print("\nAtualização de arquivos concluída.")
 
 def relancar_app():
-    caminho_app = Path('..') / Path('..') / 'system_main' / 'XLogs.exe'
-    caminho_app = caminho_app.resolve()
+    base_path = Path(sys.executable).parent
+    caminho_app = (base_path / '..' / '..' / 'system_main' / 'XLogs.exe').resolve()
     
     if not caminho_app.exists():
         print(f'Erro: XLogs.exe não encontrado em: {caminho_app}')
@@ -178,10 +209,10 @@ def relancar_app():
     sys.exit(0)  # encerra o updater
 
 def main():
-    versao_remota = verificar_nova_versao()
-    versao_local = obter_versao_local(VERSAO_JSON_PATH)
+    versao_remota, url_remota = verificar_nova_versao()
+    versao_local, _ = obter_versao_local(VERSAO_JSON_PATH)
 
-    if versao_remota is None or url_zip is None:
+    if versao_remota is None or url_remota is None:
         print('Não foi possível verificar a versão. Abrindo app normalmente.')
         relancar_app()
         return
@@ -189,11 +220,12 @@ def main():
     if versao_remota != versao_local:
         print(f'Nova versão disponível: {versao_remota} || local: {versao_local}')
         aguardar_fechamento()
-        baixar_zip(url_zip)
+        baixar_zip(url_remota)
         extrair_zip()
-        substituir_arquivos(versao_remota, url_zip)
+        substituir_arquivos(versao_remota, url_remota)
         relancar_app()
     else:
+        print(f'Versão remota: {versao_remota} || Versão local: {versao_local}')
         print('Aplicativo já está na última versão.')
         relancar_app()
 
