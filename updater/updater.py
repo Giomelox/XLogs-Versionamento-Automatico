@@ -9,7 +9,17 @@ import subprocess
 from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv(dotenv_path = os.path.join(os.getcwd(), 'token.env'))
+def resource_path(relative_path):
+    """Retorna o caminho absoluto para uso com PyInstaller"""
+    try:
+        base_path = sys._MEIPASS  # Quando empacotado
+    except AttributeError:
+        base_path = os.path.abspath(".")  # Quando em desenvolvimento
+    return os.path.join(base_path, relative_path)
+
+dotenv_path = resource_path('token.env')
+load_dotenv(dotenv_path = dotenv_path)
+
 token = os.getenv('token')
 
 # Nome do executável principal
@@ -21,9 +31,6 @@ BASE_PATH = Path(sys.executable).parent
 
 # Caminho absoluto para a pasta system_main (2 níveis acima de system_manager/dist)
 SYSTEM_MAIN = (BASE_PATH / '..' / '..' / 'system_main').resolve()
-
-# Caminho até o token.env
-DOTENV_PATH = 'token.env'
 
 # Caminho até a versão.json no mesmo nível de system_main e system_manager
 VERSAO_JSON_PATH = 'versão.json'
