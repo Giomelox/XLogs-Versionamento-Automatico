@@ -55,7 +55,7 @@ class PlanilhaManager:
 
     def recarregar_planilha(self):
         if self.file_path:
-            df = pd.read_excel(self.file_path, sheet_name='Processos devolução (programa)')
+            df = pd.read_excel(self.file_path, sheet_name = 'Processos devolução (programa)')
             self.set_planilha(df, self.file_path)
 
 class SolicitarPlanilha:
