@@ -2,12 +2,12 @@
 
 ## Estrutura de arquivos para utilizar como executável.
 
-### 1º: Estar na pasta do updater e utilizar (pyinstaller --onefile updater.py) para empacotar o executável do atualizador automático.
+### 1º: Estar na pasta do updater (pelo terminal) e utilizar (pyinstaller --onefile --add-data "token.env;." updater.py) para empacotar o executável do atualizador automático, lembre de deixar o arquivo token na mesma pasta do updater.
 
-### 2º: Estar na pasta do XLogs e utilizar (pyinstaller --noconfirm --clean --onefile --windowed --add-data "app/imagens;imagens" XLogs.py) para empacotar o executável do arquivo principal juntamente das imagens.
+### 2º: Estar na pasta do XLogs (pelo terminal) e utilizar (pyinstaller --noconfirm --clean --onefile --windowed --add-data "app/imagens;imagens" XLogs.py) para empacotar o executável do arquivo principal juntamente das imagens.
 
 ### 3º: Separar os arquivos .exe gerados em duas pastas, sejam elas: system_main (adicione à esta pasta, o XLogs.exe e a pasta contendo as imagens). 
-### e a outra pasta que deve ser criada abaixo de system_main, é system_manager/dist (adicione à esta pasta, o token.env, a versão.json e o updater.py)
+### e a outra pasta que deve ser criada abaixo de system_main, é system_manager/dist (adicione à esta pasta, o versão.json e o updater.exe)
 
 ## Como começar a preparar atualização
 
