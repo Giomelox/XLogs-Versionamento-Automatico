@@ -17,10 +17,10 @@ executavel = 'XLogs.exe'
 
 url_zip = f'https://api.github.com/repos/Giomelox/XLogs/releases/tags/v0.0.1'
 
-BASE_DIR = Path(getattr(sys, '_MEIPASS', Path(__file__).parent)).resolve()
+BASE_PATH = Path(sys.executable).parent
 
-# Caminho absoluto até system_main
-SYSTEM_MAIN = BASE_DIR.parent.parent / 'system_main'
+# Caminho absoluto para a pasta system_main (2 níveis acima de system_manager/dist)
+SYSTEM_MAIN = (BASE_PATH / '..' / '..' / 'system_main').resolve()
 
 # Caminho até o token.env
 DOTENV_PATH = 'token.env'
