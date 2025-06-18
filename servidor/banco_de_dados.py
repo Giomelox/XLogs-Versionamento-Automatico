@@ -2,7 +2,7 @@ from models import db, Usuario
 from flask import Flask
 import os
 
-'''OBS: ESTE CÓDIGO É VÁLIDO APENAS PARA USO LOCAL, PARA CRIAR, REMOVER, VALIDAR OU INVALIDAR ALGUM USUÁRIO DO BANCO DE DADOS.
+'''OBS: ESTE CÓDIGO É VÁLIDO APENAS PARA USO LOCAL, PARA CRIAR OU REMOVER ALGUM USUÁRIO DO BANCO DE DADOS.
 NÃO COMPARTILHAR NEM PUBLICAR, POIS ESTÁ COM CHAVES PRIVADAS.'''
 
 app = Flask(__name__)
@@ -18,7 +18,7 @@ def visualizar_tabela():
         print('Nenhum usuário encontrado.')
     else:
         for u in usuarios:
-            print(f"\nEmail: {u.email}\n")
+            print(f"\nEmail: {u.email}")
 
 def criar_usuario(email):
     with app.app_context():
@@ -47,6 +47,6 @@ def remover_usuario(email):
         print(f"Usuário '{email}' excluído com sucesso.")
 
 if __name__ == '__main__':
+    #criar_usuario(email = 'Emme2')
+    #remover_usuario(email = 'nfe@seculusinformatica.com.br')
     visualizar_tabela()
-    #criar_usuario(email = 'matecrecifepe@gmail.com')
-    #remover_usuario(email = 'matecrecifepe@gmail.com')
