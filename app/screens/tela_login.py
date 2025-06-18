@@ -92,7 +92,7 @@ def login(current_view, views, page):
     )
 
     texto_apresentação = ft.Text(
-        'Este é o LogiFlow, seu sistema de automação para processos logísticos. Ganhe eficiência, agilidade e controle total das operações.',
+        'Este é o XLogs, seu sistema de automação para processos logísticos. Ganhe eficiência, agilidade e controle total das operações.',
         color = 'white',
         size = 20
     )
