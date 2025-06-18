@@ -1,12 +1,14 @@
-from app.funções.funções_Gerais import PlanilhaManager, obter_configs, navigate
+from app.funções.funções_Gerais import PlanilhaManager, obter_configs, navigate, resource_path
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+from dotenv import load_dotenv
 from pathlib import Path
 import flet as ft
 import shutil
 import imaplib
 import pickle
 import email
+import json
 import os
 
 if os.name == 'nt':  # Para Windows
@@ -16,7 +18,21 @@ else:  # Para macOS e Linux
 
 current_dir = Path(__file__).parent
 
-aux_path_json = current_dir / 'credentials.json'
+aux_path_credentials = resource_path('credentials.env')
+load_dotenv(dotenv_path = aux_path_credentials)
+
+config_dict = {
+    "installed": {
+        "client_id": os.getenv("CLIENT_ID"),
+        "client_secret": os.getenv("CLIENT_SECRET"),
+        "auth_uri": os.getenv("AUTH_URI"),
+        "token_uri": os.getenv("TOKEN_URI"),
+        "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
+        "redirect_uris": json.loads(os.getenv("REDIRECT_URIS"))
+    }
+}
+
+print(json.dumps(config_dict, indent = 2))
 
 aux_path_XML_destino = download_dir / 'XML_DELL'
 
@@ -52,8 +68,6 @@ def conectar_email_e_baixar_arquivos_HP(log_instance):
         else:
             substrings_hp.append(cell_hp)
 
-    SCOPES = ['https://mail.google.com/']
-
     def get_gmail_service():
         """Realiza a autenticação OAuth2 e retorna o serviço do Gmail."""
         
@@ -63,6 +77,8 @@ def conectar_email_e_baixar_arquivos_HP(log_instance):
             with open('token.pickle', 'rb') as token:
                 creds = pickle.load(token)
 
+        SCOPES = ['https://mail.google.com/']
+
         # Verifica se as credenciais são válidas, e se não, tenta atualizar ou obter novas
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
@@ -71,11 +87,13 @@ def conectar_email_e_baixar_arquivos_HP(log_instance):
                 except Exception as e:
                     log_instance.log_message(f'Erro ao atualizar as credenciais: {e}')
                     # Se falhar, precisa obter novas credenciais
-                    flow = InstalledAppFlow.from_client_secrets_file(str(aux_path_json), SCOPES)
+                
+                    flow = InstalledAppFlow.from_client_config(config_dict, scopes = SCOPES)
                     creds = flow.run_local_server(port = 0)  # Inicia o fluxo de autenticação
             else:
                 # Se não houver credenciais, inicia o fluxo de autenticação
-                flow = InstalledAppFlow.from_client_secrets_file(str(aux_path_json), SCOPES)
+                
+                flow = InstalledAppFlow.from_client_config(config_dict, scopes = SCOPES)
                 creds = flow.run_local_server(port = 0)
 
             # Salva as credenciais para futuras execuções
@@ -220,8 +238,6 @@ def conectar_email_e_baixar_arquivos_Dell(log_instance):
         else:
             substrings_Dell.append(cell_Dell)
 
-    SCOPES_devolução = ['https://mail.google.com/']
-
     def get_gmail_service():
         """Realiza a autenticação OAuth2 e retorna o serviço do Gmail."""
         
@@ -231,6 +247,8 @@ def conectar_email_e_baixar_arquivos_Dell(log_instance):
             with open('token.pickle', 'rb') as token:
                 creds = pickle.load(token)
 
+        SCOPES = ['https://mail.google.com/']
+        
         # Verifica se as credenciais são válidas, e se não, tenta atualizar ou obter novas
         if not creds or not creds.valid:
             if creds and creds.expired and creds.refresh_token:
@@ -242,12 +260,13 @@ def conectar_email_e_baixar_arquivos_Dell(log_instance):
                 except Exception as e:
                     log_instance.log_message(f'Erro ao atualizar as credenciais: {e}')
                     # Se falhar, precisa obter novas credenciais
-                    flow = InstalledAppFlow.from_client_secrets_file(str(aux_path_json), SCOPES_devolução)
-                    creds = flow.run_local_server(port=0)  # Inicia o fluxo de autenticação
+                    flow = InstalledAppFlow.from_client_config(config_dict, scopes = SCOPES)
+                    creds = flow.run_local_server(port = 0)  # Inicia o fluxo de autenticação
             else:
                 # Se não houver credenciais, inicia o fluxo de autenticação
-                flow = InstalledAppFlow.from_client_secrets_file(str(aux_path_json), SCOPES_devolução)
-                creds = flow.run_local_server(port=0)
+                
+                flow = InstalledAppFlow.from_client_config(config_dict, scopes = SCOPES)
+                creds = flow.run_local_server(port = 0)
 
             # Salva as credenciais para futuras execuções
             with open('token.pickle', 'wb') as token:
@@ -388,8 +407,8 @@ def baixar_arquivosXML_DELL(page: ft.Page, log_instance, views, current_view):
         try:
             log_instance.log_message('Iniciando download de arquivos...')
             conectar_email_e_baixar_arquivos_Dell(log_instance)
-        except:
-            log_instance.log_message('Erro: Verifique se alguma planilha foi selecionada')
+        except Exception as e:
+            log_instance.log_message(f'Erro: Verifique se alguma planilha foi selecionada:\n {e}')
             botao_voltar.disabled = False
             botao_voltar.content.color = ft.Colors.WHITE
             page.update()
