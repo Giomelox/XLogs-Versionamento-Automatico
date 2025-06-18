@@ -868,13 +868,18 @@ def emitir_nf_entrada_tec(log_instance, page, views, current_view):
                     
                     try:
 
-                        element_produto_selecionar = WebDriverWait(driver, 50).until( 
-                            EC.element_to_be_clickable((By.XPATH, f'/html/body/div[4]/section/div/div[3]/form/div[1]/div[9]/div/div[7]/div/div[1]/div/div/table/tbody/tr[{idx_element}]/td[4]/div/span/input')) 
+                        element_baixar_frete = WebDriverWait(driver, 50).until(
+                            EC.presence_of_element_located((By.ID, 'nfe_carriage_modality'))
                         )
-                        driver.execute_script("""
-                            arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            window.scrollBy(0, 230);  // Ajusta o scroll um pouco para baixo (230px)
-                        """, element_produto_selecionar)
+
+                        # Dá o scroll para as observações para que o programa consiga encontrar o ultimo produto listado
+                        driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_baixar_frete)
+
+                        time.sleep(1)
+
+                        element_produto_selecionar = WebDriverWait(driver, 50).until( 
+                            EC.element_to_be_clickable((By.XPATH, f'/html/body/div[4]/section/div/div[3]/form/div[1]/div[9]/div/div[7]/div/div[1]/div/div/table/tbody/tr[{idx_element}]/td[2]/div/span/input')) 
+                        )
 
                         element_produto_selecionar.click()
 
@@ -2797,7 +2802,7 @@ def emitir_NF_dev_flex(log_instance, page, views, current_view):
                     EC.presence_of_element_located((By.ID, 'nfe_notes'))
                 )
 
-                element_observação.send_keys(f'@ENV ;@REF {CHAMADO} REF NF {', '.join(nf_lista)} PN {', '.join(pn_lista)}\n I - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL";II - "NÃO GERA DIREITO A CRÉDITO FISCAL DE ICMS, DE ISS E DE IPI".')
+                element_observação.send_keys(f'@ENV ;@REF {CHAMADO} REF NF {', '.join(nf_lista)} PN {', '.join(pn_lista)} DEFECTIVE\n I - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL";II - "NÃO GERA DIREITO A CRÉDITO FISCAL DE ICMS, DE ISS E DE IPI".')
 
                 # Encontra o bloco de pagamento e seleciona o 90
                 element_formaPagamento = Select(driver.find_element(By.ID, 'nfe_payment_method'))
