@@ -463,7 +463,7 @@ def emitir_nf_circulação(log_instance, page, views, current_view):
 
                         # Encontra o campo de ICMS e clica nele
                         element_campo_ICMS = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[2]/a'))
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[3]/a'))
                         )
                         element_campo_ICMS.click()
 
@@ -868,18 +868,13 @@ def emitir_nf_entrada_tec(log_instance, page, views, current_view):
                     
                     try:
 
-                        element_baixar_frete = WebDriverWait(driver, 50).until(
-                            EC.presence_of_element_located((By.ID, 'nfe_carriage_modality'))
-                        )
-
-                        # Dá o scroll para as observações para que o programa consiga encontrar o ultimo produto listado
-                        driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_baixar_frete)
-
-                        time.sleep(1)
-
                         element_produto_selecionar = WebDriverWait(driver, 50).until( 
-                            EC.element_to_be_clickable((By.XPATH, f'/html/body/div[4]/section/div/div[3]/form/div[1]/div[9]/div/div[7]/div/div[1]/div/div/table/tbody/tr[{idx_element}]/td[2]/div/span/input')) 
+                            EC.element_to_be_clickable((By.XPATH, f'/html/body/div[4]/section/div/div[3]/form/div[1]/div[9]/div/div[7]/div/div[1]/div/div/table/tbody/tr[{idx_element}]/td[4]/div/span/input')) 
                         )
+                        driver.execute_script("""
+                            arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            window.scrollBy(0, 230);  // Ajusta o scroll um pouco para baixo (230px)
+                        """, element_produto_selecionar)
 
                         element_produto_selecionar.click()
 
@@ -955,7 +950,7 @@ def emitir_nf_entrada_tec(log_instance, page, views, current_view):
 
                         # Encontra o campo de ICMS e clica nele
                         element_campo_ICMS = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[2]/a'))
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[3]/a'))
                         )
                         element_campo_ICMS.click()
 
@@ -1493,7 +1488,7 @@ def emitir_NF_dev_dell(log_instance, page, views, current_view):
 
                         # Encontra o campo de ICMS e clica nele
                         element_campo_ICMS = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[2]/a'))
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[3]/a'))
                         )
                         element_campo_ICMS.click()
 
@@ -2128,7 +2123,7 @@ def emitir_NF_dev_hp(log_instance, page, views, current_view):
 
                         # Encontra o campo de ICMS e clica nele
                         element_campo_ICMS = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[2]/a'))
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[3]/a'))
                         )
                         element_campo_ICMS.click()
 
@@ -2524,25 +2519,16 @@ def emitir_NF_dev_flex(log_instance, page, views, current_view):
 
     planilha_df.ffill(inplace = True)
 
-    ler_planilha_mesclada = planilha_df.groupby('CHAMADO', as_index = False, sort = False).agg({
-        'NF OU XML PARA BAIXAR (PROGRAMA)': lambda x: ', '.join(map(str, filter(pd.notna, x))),
-        'PN CAIXA.': lambda x: ', '.join(map(str, x)),
-        'VALOR': lambda x: ', '.join(map(str, x)),
-        'CST': lambda x: ', '.join(map(str, x)),
-        'NCM': lambda x: ', '.join(map(str, x)),
-        'QTD.': lambda x: ', '.join(map(str, x))
-    })
 
     try:
-        for index, row in ler_planilha_mesclada.iloc[:].iterrows(): # Lê todas as linhas da planilha com as colunas selecionadas
-            CHAMADO = str(row['CHAMADO']).replace('.0', '').strip()
-            nf_lista = str(row['NF OU XML PARA BAIXAR (PROGRAMA)']).replace('.0', '').strip().split(', ')
-            pn_lista = str(row['PN CAIXA.']).strip().split(', ')
-            valor_lista = str(row['VALOR']).replace('.', ',').strip().split(', ')
-            cst_lista = str(row['CST']).split(', ')
-            ncm_lista = str(row['NCM']).strip().split(', ')
-            qtd_lista = str(row['QTD.']).strip().split(', ')
-
+            CHAMADO = list(planilha_df['CHAMADO'])
+            nf_lista = list(planilha_df['NF OU XML PARA BAIXAR (PROGRAMA)'])
+            pn_lista = list(planilha_df['PN CAIXA.'])
+            valor_lista = list(planilha_df['VALOR'])
+            cst_lista = list(planilha_df['CST'])
+            ncm_lista = list(planilha_df['NCM'])
+            qtd_lista = list(planilha_df['QTD.'])
+            
             try:
 
                 try:
@@ -2585,7 +2571,7 @@ def emitir_NF_dev_flex(log_instance, page, views, current_view):
 
                 idx_qtd = 0
                 
-                for pn, valor, cst, ncm, qtd in zip(pn_lista, valor_lista, cst_lista, ncm_lista, qtd_lista):
+                for chamado, pn, valor, cst, ncm, qtd in zip(CHAMADO, pn_lista, valor_lista, cst_lista, ncm_lista, qtd_lista):
                     
                     # Busca pelo campo para inserir o produto
                     element_produto = WebDriverWait(driver, 50).until( 
@@ -2700,7 +2686,7 @@ def emitir_NF_dev_flex(log_instance, page, views, current_view):
 
                         # Encontra o campo de ICMS e clica nele
                         element_campo_ICMS = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[2]/a'))
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[3]/a'))
                         )
                         element_campo_ICMS.click()
 
@@ -2802,7 +2788,7 @@ def emitir_NF_dev_flex(log_instance, page, views, current_view):
                     EC.presence_of_element_located((By.ID, 'nfe_notes'))
                 )
 
-                element_observação.send_keys(f'@ENV ;@REF {CHAMADO} REF NF {', '.join(nf_lista)} PN {', '.join(pn_lista)} DEFECTIVE\n I - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL";II - "NÃO GERA DIREITO A CRÉDITO FISCAL DE ICMS, DE ISS E DE IPI".')
+                element_observação.send_keys(f'@ENV ;@REF {', '.join(CHAMADO)} REF NF {', '.join(nf_lista)} PN {', '.join(pn_lista)}\n I - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL";II - "NÃO GERA DIREITO A CRÉDITO FISCAL DE ICMS, DE ISS E DE IPI".')
 
                 # Encontra o bloco de pagamento e seleciona o 90
                 element_formaPagamento = Select(driver.find_element(By.ID, 'nfe_payment_method'))
@@ -2874,9 +2860,8 @@ def emitir_NF_dev_flex(log_instance, page, views, current_view):
                 )
                 element_nova_nota_emitir3.click()       
 
-                idx += 1 
+                driver.quit()
 
-                continue
     except:
         driver.quit()
 
