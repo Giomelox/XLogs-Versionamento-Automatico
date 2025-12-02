@@ -2516,367 +2516,352 @@ def emitir_NF_dev_flex(log_instance, page, views, current_view):
     
     planilha_df = planilha_manager.get_planilha()
 
-
-    planilha_df.ffill(inplace = True)
-
-
     try:
-            CHAMADO = list(planilha_df['CHAMADO'])
-            nf_lista = list(planilha_df['NF OU XML PARA BAIXAR (PROGRAMA)'])
-            pn_lista = list(planilha_df['PN CAIXA.'])
-            valor_lista = list(planilha_df['VALOR'])
-            cst_lista = list(planilha_df['CST'])
-            ncm_lista = list(planilha_df['NCM'])
-            qtd_lista = list(planilha_df['QTD.'])
-            
-            try:
+        planilha_df.ffill(inplace = True)
+    except AttributeError:
+        log_instance.log_message(f'Erro. Verifique se alguma planilha foi selecionada.')
 
-                try:
-                    element_contingencia = WebDriverWait(driver, 5).until(
-                        EC.presence_of_element_located((By.XPATH, '//a[contains(text(), "Aguardar")]'))
-                    )
-                    element_contingencia.click()
-                except:
-                    pass
-
-                # Encontra o campo de cliente
-                element_cliente_emitir = WebDriverWait(driver, 50).until( 
-                    EC.presence_of_element_located((By.ID, 'nfe_client_id'))
-                )
-                element_cliente_emitir.send_keys(cliente_IOB) # Insere no campo cliente
-
-                element_results_client_emitir = WebDriverWait(driver, 50).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div.results')) # Lê as opções dadas pelo site com a lista de clientes
-                )
-
-                element_first_li_cliente_emitir = element_results_client_emitir.find_element(By.CSS_SELECTOR, 'ul li:first-child') # Seleciona o primeiro cliente que aparece
-                element_first_li_cliente_emitir.click()
-
-                # Encontra o campo de natureza
-                element_natureza_emitir = WebDriverWait(driver, 50).until( 
-                    EC.presence_of_element_located((By.ID, 'nfe_nature_id'))
-                )
-                element_natureza_emitir.clear() # Limpa o que estiver escrito no campo natureza
-
-                element_natureza_emitir.send_keys(natureza_IOB) # Insere no campo natureza
-
-                element_results_natureza_emitir = WebDriverWait(driver, 50).until( # Lê as opções dadas pelo site com a lista de natureza
-                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div.results'))
-                )
-
-                element_first_li_natureza_emitir = element_results_natureza_emitir.find_element(By.CSS_SELECTOR, 'ul li:first-child') # Seleciona a primeira natureza que aparece
-                element_first_li_natureza_emitir.click()
-
-                idx_element = 1
-
-                idx_qtd = 0
-                
-                for chamado, pn, valor, cst, ncm, qtd in zip(CHAMADO, pn_lista, valor_lista, cst_lista, ncm_lista, qtd_lista):
-                    
-                    # Busca pelo campo para inserir o produto
-                    element_produto = WebDriverWait(driver, 50).until( 
-                        EC.presence_of_element_located((By.ID, 'nfe_product_id'))
-                    )
-
-                    driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_produto)
-
-                    # Insere o produto que está na planilha
-                    element_produto.send_keys(pn) 
-
-                    time.sleep(1)
-
-                    # Encontra a lista de opções do produto
-                    element_produto_results = WebDriverWait(driver, 50).until( 
-                        EC.presence_of_element_located((By.CSS_SELECTOR, 'div.results')) 
-                    )
-
-                    # Seleciona o primeiro produto que aparece                                          
-                    element_first_li_produto_emitir = element_produto_results.find_element(By.CSS_SELECTOR, f'ul li:first-child') 
-                    element_first_li_produto_emitir.click() 
-
-                    time.sleep(1.5)
-                    
-                    try:
-
-                        element_observação = WebDriverWait(driver, 50).until(
-                            EC.presence_of_element_located((By.ID, 'nfe_notes'))
-                        )
-
-                        # Dá o scroll para as observações para que o programa consiga encontrar o ultimo produto listado
-                        driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_observação)
-
-                        time.sleep(1)
-
-                        element_produto_selecionar = WebDriverWait(driver, 50).until( 
-                            EC.element_to_be_clickable((By.XPATH, f'/html/body/div[4]/section/div/div[3]/form/div[1]/div[9]/div/div[7]/div/div[1]/div/div/table/tbody/tr[{idx_element}]/td[2]/div/span/input')) 
-                        )
-
-                        element_produto_selecionar.click()
-
-                        # Encontra o elemento NCM do produto e envia os dados da planilha
-                        element_NCM = WebDriverWait(driver, 50).until(
-                            EC.presence_of_element_located((By.ID, 'item_product_ncm_id'))
-                        )
-                        driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_NCM)
-                        element_NCM.clear()
-
-                        time.sleep(1.5)
-
-                        for x in ncm:
-                            element_NCM.send_keys(x)
-                            time.sleep(0.8)
-
-                        time.sleep(3)
-
-                        # Lê as opções dadas pelo site com a lista de NCM
-                        
-                        element_NCM = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.CSS_SELECTOR, 'div.results'))
-                        )
-                        time.sleep(2)
-
-                        # Seleciona o primeiro NCM que aparece
-                        element_NCM_prod = element_NCM.find_element(By.CSS_SELECTOR, 'ul li:first-child') 
-                        element_NCM_prod.click()
-                        actions.send_keys(Keys.TAB).perform()
-
-                        element_CFOP = Select(driver.find_element(By.ID, 'item_cfop'))
-                
-                        element_CFOP.select_by_value('5949')
-
-                        # Altera o display da informação ''quantidade'' do produto para ser possível acessar pelo selenium
-                        element_quantidade_comercial = WebDriverWait(driver, 50).until(
-                            EC.presence_of_element_located((By.ID, 'item_quantity'))
-                        )
-                        driver.execute_script("""
-                            arguments[0].value = arguments[1];
-                            arguments[0].dispatchEvent(new Event('input'));
-                            arguments[0].dispatchEvent(new Event('change'));
-                            """, element_quantidade_comercial, qtd)
-                        
-                        element_quantidade_tributavel =  WebDriverWait(driver, 50).until(
-                            EC.presence_of_element_located((By.ID, 'item_taxable_amount'))
-                        )
-                        driver.execute_script("""
-                            arguments[0].value = arguments[1];
-                            arguments[0].dispatchEvent(new Event('input'));
-                            arguments[0].dispatchEvent(new Event('change'));
-                            """, element_quantidade_tributavel, qtd)
-
-                        # Altera o display da informação ''valor unitário'' do produto para ser possível acessar pelo selenium
-                        driver.execute_script("document.getElementById('item_unit_price').style.display = 'block';") 
-                        element_valor_produto = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.ID, 'item_unit_price'))
-                        )
-
-                        # Força a inserção do valor no site
-                        driver.execute_script("""
-                            arguments[0].value = arguments[1];
-                            arguments[0].dispatchEvent(new Event('input'));
-                            arguments[0].dispatchEvent(new Event('change'));
-                            """, element_valor_produto, valor)
-                        actions.send_keys(Keys.TAB).perform()
-
-                        element_valor_taxa = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.ID, 'item_taxable_price'))
-                        )
-                        element_valor_taxa.clear()
-
-                        time.sleep(0.5) # Tempo para salvar o valor do produto
-
-                        # Encontra o campo de ICMS e clica nele
-                        element_campo_ICMS = WebDriverWait(driver, 50).until( 
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[3]/a'))
-                        )
-                        element_campo_ICMS.click()
-
-                        # Encontra o campo ORIG e altera para o orig do produto
-                        element_orig = Select(driver.find_element(By.XPATH, f'//*[@id="item_icms_origin"]'))
-
-                        element_orig.select_by_value(cst)
-
-                        # Encontra o campo para alterar o CST do produto para 400
-                        element_cst = Select(driver.find_element(By.ID, 'item_icms_cst'))
-
-                        element_cst.select_by_value('400')
-
-                        element_submit_produto = driver.find_element(By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[4]/div/span[1]/button') # Encontra o botão de salvar as informações do produto e clica
-                        driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_submit_produto)
-                        driver.execute_script("arguments[0].click();", element_submit_produto)
-
-                        idx_qtd += 1
-
-                        idx_element += 1
-
-                    except AssertionError:
-                        pass
-                
-                    except Exception as e:
-                        log_instance.log_message(f'{idx}: Erro ao tentar inserir um dado do produto {CHAMADO}/{pn}')
-
-                        driver.get('https://emissor2.iob.com.br/notafiscal/nfes')
-
-                        driver.refresh()
-
-                        element_nova_nota_emitir1 = WebDriverWait(driver, 200).until(
-                            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class="UIContainer button-grid"] a[class="UILink button primary with_margin"]'))
-                        )
-                        element_nova_nota_emitir1.click()   
-
-                        idx += 1
-
-                        continue
-
-                # Encontra e clica na modalidade de frete
-                element_frete =  WebDriverWait(driver, 50).until( 
-                    EC.presence_of_element_located((By.ID, 'nfe_carriage_modality'))
-                )
-                time.sleep(0.5)
-                driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_frete)
-                time.sleep(0.5)
-                element_frete.click()
-
-                # Encontra dentro das opções, o frete do processo
-
-                element_frete_terceiros = Select(driver.find_element(By.ID, 'nfe_carriage_modality'))
-                
-                element_frete_terceiros.select_by_value('9')
-
-                # Encontra o bloco de quantidade de produtos e insere a quantidade 
-                element_quantidade = WebDriverWait(driver, 50).until( 
-                        EC.presence_of_element_located((By.ID, 'nfe_carriage_quantity')) 
-                )
-                element_quantidade.clear()
-                element_quantidade.send_keys(idx_qtd)
-                actions.send_keys(Keys.TAB).perform()
-
-                # Encontra o bloco de espécie de produtos e insere 'volume'
-                element_especie = WebDriverWait(driver, 50).until( 
-                        EC.presence_of_element_located((By.ID, 'nfe_carriage_kind'))
-                )
-                element_especie.send_keys('VOLUME')
-                actions.send_keys(Keys.TAB).perform() 
-
-                element_peso_bruto = WebDriverWait(driver, 50).until( 
-                    EC.presence_of_element_located((By.ID, 'nfe_carriage_gross_weight')) 
-                )
-                driver.execute_script("""
-                    arguments[0].value = arguments[1];
-                    arguments[0].dispatchEvent(new Event('input'));
-                    arguments[0].dispatchEvent(new Event('change'));
-                    """, element_peso_bruto, idx_qtd)
-                time.sleep(0.5)
-                actions.send_keys(Keys.TAB).perform()
-
-                time.sleep(0.5) # Tempo para processar o peso bruto
-
-                element_peso_liquido = WebDriverWait(driver, 50).until( 
-                    EC.presence_of_element_located((By.ID, 'nfe_carriage_net_weight')) 
-                )
-                driver.execute_script("""
-                    arguments[0].value = arguments[1];
-                    arguments[0].dispatchEvent(new Event('input'));
-                    arguments[0].dispatchEvent(new Event('change'));
-                    """, element_peso_liquido, idx_qtd)
-                time.sleep(0.5)
-                actions.send_keys(Keys.TAB).perform()
-
-                time.sleep(0.5) # Tempo para processar o peso liquido
-
-                # Encontra o campo de observação e adiciona as informações de acordo com a planilha
-                element_observação = WebDriverWait(driver, 50).until(
-                    EC.presence_of_element_located((By.ID, 'nfe_notes'))
-                )
-
-                element_observação.send_keys(f'@ENV ;@REF {', '.join(CHAMADO)} REF NF {', '.join(nf_lista)} PN {', '.join(pn_lista)}\n I - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL";II - "NÃO GERA DIREITO A CRÉDITO FISCAL DE ICMS, DE ISS E DE IPI".')
-
-                # Encontra o bloco de pagamento e seleciona o 90
-                element_formaPagamento = Select(driver.find_element(By.ID, 'nfe_payment_method'))
-                element_formaPagamento.select_by_value('90')
-
-                # Encontra o bloco de valor total e zera
-                element_pagamento_total = driver.find_element(By.ID, 'nfe_total_information_attributes_paid_total')
-                element_pagamento_total.clear()
-                actions.send_keys(Keys.TAB).perform() 
-
-                time.sleep(1.5)
-
-                # Encontra o elemento para emitir a nota e clica
-                element_emitir_nota = driver.find_element(By.ID, 'save-and-submit-nfe')
-                driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_emitir_nota)
-                time.sleep(1)
-                element_emitir_nota.click()
-
-                time.sleep(1) # Aguarda até aparecer a contingencia ou confirmar a NF
-            
-                element_contingencia1 = WebDriverWait(driver, 50).until(
-                    EC.presence_of_element_located((By.XPATH, '//a[contains(text(), "Aguardar")]'))
-                )
-
-                try:
-                    element_contingencia1.click()
-                except:
-                    pass
-
-                # Confirma a emissão da NF
-                element_confirmar_emissão = WebDriverWait(driver, 100).until(
-                    EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[12]/div[2]/span/button'))
-                )
-                element_confirmar_emissão.click()
-
-                element_carregar = WebDriverWait(driver, 100).until( # Aguarda o elemento do carregamento da NF desaparecer para continuar
-                    EC.invisibility_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[5]/div[2]/div/div/a'))
-                )
-
-                if element_carregar:
-
-                    driver.get('https://emissor2.iob.com.br/notafiscal/nfes')
-
-                driver.refresh()
-
-                element_nova_nota_emitir2 = WebDriverWait(driver, 60).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class="UIContainer button-grid"] a[class="UILink button primary with_margin"]'))
-                )
-                element_nova_nota_emitir2.click()
-
-                idx += 1
-                
-                log_instance.log_message(f'{idx}: {CHAMADO}/{pn_lista} inseridos com sucesso no site.')
-
-                time.sleep(2.5)
-
-            except AssertionError:
-                pass
-
-            except Exception as e:
-                log_instance.log_message(f'Não foi possível inserir os dados da planilha no site:\n{idx}: {CHAMADO}/{pn_lista}')
-
-                driver.get('https://emissor2.iob.com.br/notafiscal/nfes')
-
-                driver.refresh()
-
-                element_nova_nota_emitir3 = WebDriverWait(driver, 200).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class="UIContainer button-grid"] a[class="UILink button primary with_margin"]'))
-                )
-                element_nova_nota_emitir3.click()       
-
-                driver.quit()
-
-    except:
         driver.quit()
-
-        log_instance.log_message('Erro: Verifique se alguma planilha foi selecionada')
 
         botao_voltar.disabled = False
         botao_voltar.content.color = ft.Colors.WHITE
         page.update()
+
+    # NOVA LÓGICA: Coleta TODOS os dados da planilha
+    todos_chamados = []
+    todas_nfs = []
+    todos_pns = []
+
+    for index, row in planilha_df.iterrows():
+        chamado = str(row['CHAMADO']).replace('.0', '').strip()
+        nf = str(row['NF OU XML PARA BAIXAR (PROGRAMA)']).replace('.0', '').strip()
+        pn = str(row['PN CAIXA.']).strip()
+        
+        todos_chamados.append(chamado)
+        todas_nfs.append(nf)
+        todos_pns.append(pn)
+
+    try:
+        # Processa UMA ÚNICA NF com todos os produtos
+        try:
+            element_contingencia = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.XPATH, '//a[contains(text(), "Aguardar")]'))
+            )
+            element_contingencia.click()
+        except:
+            pass
+
+        # Encontra o campo de cliente
+        element_cliente_emitir = WebDriverWait(driver, 50).until( 
+            EC.presence_of_element_located((By.ID, 'nfe_client_id'))
+        )
+        element_cliente_emitir.send_keys(cliente_IOB) # Insere no campo cliente
+
+        element_results_client_emitir = WebDriverWait(driver, 50).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div.results')) # Lê as opções dadas pelo site com a lista de clientes
+        )
+
+        element_first_li_cliente_emitir = element_results_client_emitir.find_element(By.CSS_SELECTOR, 'ul li:first-child') # Seleciona o primeiro cliente que aparece
+        element_first_li_cliente_emitir.click()
+
+        # Encontra o campo de natureza
+        element_natureza_emitir = WebDriverWait(driver, 50).until( 
+            EC.presence_of_element_located((By.ID, 'nfe_nature_id'))
+        )
+        element_natureza_emitir.clear() # Limpa o que estiver escrito no campo natureza
+
+        element_natureza_emitir.send_keys(natureza_IOB) # Insere no campo natureza
+
+        element_results_natureza_emitir = WebDriverWait(driver, 50).until( # Lê as opções dadas pelo site com a lista de natureza
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div.results'))
+        )
+
+        element_first_li_natureza_emitir = element_results_natureza_emitir.find_element(By.CSS_SELECTOR, 'ul li:first-child') # Seleciona a primeira natureza que aparece
+        element_first_li_natureza_emitir.click()
+
+        idx_element = 1
+        idx_qtd = 0
+        
+        # INSERE TODOS OS PRODUTOS da planilha
+        for pn in todos_pns:
+
+            # Busca pelo campo para inserir o produto
+            element_produto = WebDriverWait(driver, 50).until( 
+                EC.presence_of_element_located((By.ID, 'nfe_product_id'))
+            )
+
+            driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_produto)
+
+            pn_sem_ultimo = pn[:-1]
+            # Insere o produto que está na planilha
+            element_produto.send_keys(pn_sem_ultimo)
+
+            time.sleep(1)
+
+            # Encontra a lista de opções do produto (PRIMEIRA VEZ)
+            element_produto_results = WebDriverWait(driver, 50).until( 
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'div.results')) 
+            )
+
+            time.sleep(1)
+
+            # Insere o último caractere do PN
+            ultimo_caractere = pn[-1]
+            element_produto.send_keys(ultimo_caractere)
+
+            # Aguarda a lista de produtos atualizar
+            time.sleep(1.5)
+
+            # CORREÇÃO: Busca a lista de resultados NOVAMENTE (elemento atualizado)
+            element_produto_results_atualizado = WebDriverWait(driver, 50).until( 
+                EC.presence_of_element_located((By.CSS_SELECTOR, 'div.results')) 
+            )
+            
+            # CORREÇÃO: Usa o elemento ATUALIZADO para clicar
+            element_first_li_produto_emitir = element_produto_results_atualizado.find_element(By.CSS_SELECTOR, 'ul li:first-child') 
+            element_first_li_produto_emitir.click() 
+
+            time.sleep(1.5)
+            
+            try:
+
+                element_observação = WebDriverWait(driver, 50).until(
+                    EC.presence_of_element_located((By.ID, 'nfe_notes'))
+                )
+
+                # Dá o scroll para as observações para que o programa consiga encontrar o ultimo produto listado
+                driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_observação)
+
+                time.sleep(1)
+
+                element_produto_selecionar = WebDriverWait(driver, 50).until( 
+                    EC.element_to_be_clickable((By.XPATH, f'/html/body/div[4]/section/div/div[3]/form/div[1]/div[9]/div/div[7]/div/div[1]/div/div/table/tbody/tr[{idx_element}]/td[2]/div/span/input')) 
+                )
+
+                element_produto_selecionar.click()
+
+                time.sleep(3)
+
+                element_CFOP = Select(driver.find_element(By.ID, 'item_cfop'))
+        
+                element_CFOP.select_by_value('6949')
+
+                # Altera o display da informação ''quantidade'' do produto para ser possível acessar pelo selenium
+                element_quantidade_comercial = WebDriverWait(driver, 50).until(
+                    EC.presence_of_element_located((By.ID, 'item_quantity'))
+                )
+                driver.execute_script("""
+                    arguments[0].value = arguments[1];
+                    arguments[0].dispatchEvent(new Event('input'));
+                    arguments[0].dispatchEvent(new Event('change'));
+                    """, element_quantidade_comercial, 1)
+                
+                element_quantidade_tributavel =  WebDriverWait(driver, 50).until(
+                    EC.presence_of_element_located((By.ID, 'item_taxable_amount'))
+                )
+                driver.execute_script("""
+                    arguments[0].value = arguments[1];
+                    arguments[0].dispatchEvent(new Event('input'));
+                    arguments[0].dispatchEvent(new Event('change'));
+                    """, element_quantidade_tributavel, 1)
+
+                driver.execute_script("document.getElementById('item_unit_price').style.display = 'block';") 
+                element_valor_produto = WebDriverWait(driver, 50).until( 
+                    EC.presence_of_element_located((By.ID, 'item_unit_price'))
+                )
+
+                # PRIMEIRO: Lê o valor atual do campo
+                valor_atual = element_valor_produto.get_attribute('value')
+
+                # Converte para float (tratando vírgula como separador decimal)
+                if ',' in valor_atual:
+                    valor_numerico = float(valor_atual.replace('.', '').replace(',', '.'))
+                else:
+                    valor_numerico = float(valor_atual)
+
+                # Calcula 10% do valor atual
+                valor_10_percent = valor_numerico * 0.10
+
+                # Formata para o padrão brasileiro
+                valor_formatado = f"{valor_10_percent:.2f}".replace('.', ',')
+
+                # Força a inserção do novo valor no site
+                driver.execute_script("""
+                    arguments[0].value = arguments[1];
+                    arguments[0].dispatchEvent(new Event('input'));
+                    arguments[0].dispatchEvent(new Event('change'));
+                    """, element_valor_produto, valor_formatado)
+                    
+                actions.send_keys(Keys.TAB).perform()
+
+                element_valor_taxa = WebDriverWait(driver, 50).until( 
+                    EC.presence_of_element_located((By.ID, 'item_taxable_price'))
+                )
+                element_valor_taxa.clear()
+
+                time.sleep(0.5) # Tempo para salvar o valor do produto
+
+                # Encontra o campo de ICMS e clica nele
+                element_campo_ICMS = WebDriverWait(driver, 50).until( 
+                    EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[3]/ul/li[3]/a'))
+                )
+                element_campo_ICMS.click()
+
+                # Encontra o campo para alterar o CST do produto para 400
+                element_cst = Select(driver.find_element(By.ID, 'item_icms_cst'))
+
+                element_cst.select_by_value('400')
+
+                element_submit_produto = driver.find_element(By.XPATH, '//*[@id="proxy-reserve"]/div[9]/div/form/div[4]/div/span[1]/button') # Encontra o botão de salvar as informações do produto e clica
+                driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_submit_produto)
+                driver.execute_script("arguments[0].click();", element_submit_produto)
+
+                idx_qtd += 1
+                idx_element += 1
+
+                log_instance.log_message(f'Produto {pn} adicionado à NF')
+
+            except AssertionError:
+                pass
+        
+            except Exception as e:
+                log_instance.log_message(f'Erro ao tentar inserir o produto {pn}: {e}')
+                idx_element += 1
+                continue
+
+        # CONFIGURA O RESTO E EMITE A NF
+        element_frete =  WebDriverWait(driver, 50).until( 
+            EC.presence_of_element_located((By.ID, 'nfe_carriage_modality'))
+        )
+        time.sleep(0.5)
+        driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_frete)
+        time.sleep(0.5)
+        element_frete.click()
+
+        element_frete_terceiros = Select(driver.find_element(By.ID, 'nfe_carriage_modality'))
+        element_frete_terceiros.select_by_value('9')
+
+        element_quantidade = WebDriverWait(driver, 50).until( 
+                EC.presence_of_element_located((By.ID, 'nfe_carriage_quantity')) 
+        )
+        element_quantidade.clear()
+        element_quantidade.send_keys(idx_qtd)
+        actions.send_keys(Keys.TAB).perform()
+
+        element_especie = WebDriverWait(driver, 50).until( 
+                EC.presence_of_element_located((By.ID, 'nfe_carriage_kind'))
+        )
+        element_especie.send_keys('VOLUME')
+        actions.send_keys(Keys.TAB).perform() 
+
+        element_peso_bruto = WebDriverWait(driver, 50).until( 
+            EC.presence_of_element_located((By.ID, 'nfe_carriage_gross_weight')) 
+        )
+        driver.execute_script("""
+            arguments[0].value = arguments[1];
+            arguments[0].dispatchEvent(new Event('input'));
+            arguments[0].dispatchEvent(new Event('change'));
+            """, element_peso_bruto, idx_qtd)
+        time.sleep(1)
+        actions.send_keys(Keys.TAB).perform()
+
+        time.sleep(1)
+
+        element_peso_liquido = WebDriverWait(driver, 50).until( 
+            EC.presence_of_element_located((By.ID, 'nfe_carriage_net_weight')) 
+        )
+        driver.execute_script("""
+            arguments[0].value = arguments[1];
+            arguments[0].dispatchEvent(new Event('input'));
+            arguments[0].dispatchEvent(new Event('change'));
+            """, element_peso_liquido, idx_qtd)
+        time.sleep(1)
+        actions.send_keys(Keys.TAB).perform()
+
+        time.sleep(1)
+
+        element_observação = WebDriverWait(driver, 50).until(
+            EC.presence_of_element_located((By.ID, 'nfe_notes'))
+        )
+
+        # OBSERVAÇÕES com TODOS os dados da planilha
+        texto_obs = f'@ENV ;@REF {", ".join(todos_chamados)} REF NF {", ".join(todas_nfs)} PN {", ".join(todos_pns)}\n I - "DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL";II - "NÃO GERA DIREITO A CRÉDITO FISCAL DE ICMS, DE ISS E DE IPI".'
+
+        element_observação.send_keys(texto_obs)
+
+        element_formaPagamento = Select(driver.find_element(By.ID, 'nfe_payment_method'))
+        element_formaPagamento.select_by_value('90')
+
+        element_pagamento_total = driver.find_element(By.ID, 'nfe_total_information_attributes_paid_total')
+        element_pagamento_total.clear()
+        actions.send_keys(Keys.TAB).perform() 
+
+        time.sleep(1.5)
+
+        element_emitir_nota = driver.find_element(By.ID, 'save-and-submit-nfe')
+        driver.execute_script("arguments[0].scrollIntoView({ behavior: 'smooth', block: 'center' });", element_emitir_nota)
+        time.sleep(1)
+        element_emitir_nota.click()
+
+        time.sleep(1)
+    
+        element_contingencia1 = WebDriverWait(driver, 50).until(
+            EC.presence_of_element_located((By.XPATH, '//a[contains(text(), "Aguardar")]'))
+        )
+
+        try:
+            element_contingencia1.click()
+        except:
+            pass
+
+        element_confirmar_emissão = WebDriverWait(driver, 100).until(
+            EC.presence_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[12]/div[2]/span/button'))
+        )
+        element_confirmar_emissão.click()
+
+        element_carregar = WebDriverWait(driver, 100).until(
+            EC.invisibility_of_element_located((By.XPATH, '//*[@id="proxy-reserve"]/div[5]/div[2]/div/div/a'))
+        )
+
+        if element_carregar:
+            driver.get('https://emissor2.iob.com.br/notafiscal/nfes')
+
+        driver.refresh()
+
+        element_nova_nota_emitir2 = WebDriverWait(driver, 60).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class="UIContainer button-grid"] a[class="UILink button primary with_margin"]'))
+        )
+        element_nova_nota_emitir2.click()
+
+        idx += 1
+        
+        log_instance.log_message(f'NF com {len(todos_pns)} produtos emitida com sucesso.')
+
+        time.sleep(2.5)
+
+    except AssertionError:
+        pass
+
+    except Exception as e:
+        log_instance.log_message(f'Não foi possível emitir a NF: {e}')
+
+        driver.get('https://emissor2.iob.com.br/notafiscal/nfes')
+        driver.refresh()
+
+        element_nova_nota_emitir3 = WebDriverWait(driver, 200).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[class="UIContainer button-grid"] a[class="UILink button primary with_margin"]'))
+        )
+        element_nova_nota_emitir3.click()       
+
+    driver.quit()
+    log_instance.log_message('Erro desconhecido.')
+    botao_voltar.disabled = False
+    botao_voltar.content.color = ft.Colors.WHITE
+    page.update()
         
     time.sleep(5)
-
     driver.close()
-
     log_instance.log_message("Emissão de NFe's concluída.")
-
     botao_voltar.disabled = False
     botao_voltar.content.color = ft.Colors.WHITE
     page.update()
