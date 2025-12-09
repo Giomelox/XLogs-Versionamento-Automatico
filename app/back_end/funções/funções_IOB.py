@@ -368,8 +368,16 @@ def emitir_nf_circulação(log_instance, page, views, current_view):
                     )
 
                     # Seleciona o primeiro produto que aparece                                          
-                    element_first_li_produto_emitir = element_produto_results.find_element(By.CSS_SELECTOR, f'ul li:first-child') 
-                    element_first_li_produto_emitir.click() 
+                    try:
+                        element_first_li_produto_emitir = driver.find_element(
+                            By.XPATH, 
+                            '//*[@id="new_nfe"]/div[1]/div[9]/div/div[7]/div/div[1]/div/div/div[1]/div/div[2]/div/span/div/ul/li[1]'
+                        )
+                        element_first_li_produto_emitir.click()
+                    except:
+                        # Fallback para CSS selector
+                        element_first_li_produto_emitir = element_produto_results.find_element(By.CSS_SELECTOR, 'ul li:first-child')
+                        element_first_li_produto_emitir.click()
 
                     time.sleep(1.5)
                     
@@ -384,11 +392,14 @@ def emitir_nf_circulação(log_instance, page, views, current_view):
 
                         time.sleep(1)
 
-                        element_produto_selecionar = WebDriverWait(driver, 50).until( 
-                            EC.element_to_be_clickable((By.XPATH, f'/html/body/div[4]/section/div/div[3]/form/div[1]/div[9]/div/div[7]/div/div[1]/div/div/table/tbody/tr[{idx_element}]/td[2]/div/span/input')) 
+                        elemento_produto_selecionar = WebDriverWait(driver, 50).until( 
+                            EC.element_to_be_clickable((
+                                By.XPATH, 
+                                f"(//input[contains(@id, '_product_name')])[{idx_element}]"
+                            )) 
                         )
+                        elemento_produto_selecionar.click()
 
-                        element_produto_selecionar.click()
 
                         # Encontra o elemento NCM do produto e envia os dados da planilha
                         element_NCM = WebDriverWait(driver, 50).until(
@@ -1411,6 +1422,7 @@ def emitir_NF_dev_dell(log_instance, page, views, current_view):
                     time.sleep(1.5)
                     
                     try:
+                        
                         # Clica no produto para alterar as informações
                         element_produto_selecionar = WebDriverWait(driver, 50).until( 
                             EC.element_to_be_clickable((By.XPATH, "//input[contains(@id, '_product_name')]")) 
